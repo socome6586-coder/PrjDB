@@ -36,7 +36,7 @@ public class TestTUser {
 			
 			TUserDTO tuser = null;
 			
-			switch(choice) {
+			switch(choice.toUpperCase()) {
 			case "1" : //회원목록
 				ArrayList<TUserDTO> userList = getTUserList();
 				displayList(userList);
@@ -53,9 +53,15 @@ public class TestTUser {
 				System.out.println(aftcnt + "건 저장되었습니다.");
 				break;
 			case "4" : //회원수정
-				
+				tuser            = inputData2();
+				int      aftcnt2 = addTuser1(tuser);
+				System.out.println(aftcnt2 + "건 수정되었습니다.");
 				break;
 			case "5" : //회원삭제
+				System.out.println("삭제할 아이디를 입력하세요");
+				String   deluid     = in.nextLine();
+				int      aftcnt3 = delTUser(deluid);
+				System.out.println(aftcnt3 + "건 삭제되었습니다.");
 				break;
 			case "Q" : //종료
 				System.out.println("프로그램을 종료합니다.");
@@ -68,6 +74,14 @@ public class TestTUser {
 		
 		
 	}
+
+	
+
+
+
+
+
+
 
 	// 전체 목록을 출력
 	private static void displayList(ArrayList<TUserDTO> userList) {
@@ -121,7 +135,7 @@ public class TestTUser {
 	private static TUserDTO getTUser(String uid) throws ClassNotFoundException, SQLException {
 		Class.forName(driver);
 		Connection         conn   = DriverManager.getConnection(url, dbuid, dbpwd);
-		String             sql    = " SELECT * FROM TUSER WHERE USERID = ? ";
+		String             sql    = " SELECT * FROM TUSER WHERE UPPER(USERID) = ? ";
 		PreparedStatement  pstmt  = conn.prepareStatement(sql);
 		pstmt.setString(1, uid.toUpperCase());
 		
@@ -163,9 +177,33 @@ public class TestTUser {
 		String 				sql    = "";
 		sql += " INSERT INTO TUSER VALUES (?, ?, ?) ";
 		PreparedStatement   pstmt  = conn.prepareStatement(sql);
-		pstmt.setString(1, tuser.getUserid());
+		pstmt.setString(1, tuser.getUserid().toUpperCase());
 		pstmt.setString(2, tuser.getUsername());
 		pstmt.setString(3, tuser.getEmail());
+		
+		try {
+			int aftcnt = pstmt.executeUpdate();			
+		} catch (Exception e) {
+			System.out.println("이름이 없거나, 중복된 아이디가 있습니다.");
+			return 0;
+		}
+		
+		pstmt.close();
+		conn.close();
+		return 1;
+	}
+
+private static int addTuser1(TUserDTO tuser) throws ClassNotFoundException, SQLException {
+		
+		Class.forName(driver);
+		Connection			conn   = DriverManager.getConnection(url, dbuid, dbpwd);
+		
+		String 				sql    = "";
+		sql += " UPDATE TUSER  SET USERNAME = ? , EMAIL = ? WHERE  USERID = ? ";
+		PreparedStatement   pstmt  = conn.prepareStatement(sql);
+		pstmt.setString(1, tuser.getUsername());
+		pstmt.setString(2, tuser.getEmail());
+		pstmt.setString(3, tuser.getUserid());
 		
 		int 				aftcnt = pstmt.executeUpdate();
 		
@@ -174,6 +212,23 @@ public class TestTUser {
 		return aftcnt;
 	}
 
+private static int delTUser(String deluid) throws SQLException, ClassNotFoundException {
+
+	Class.forName(driver);
+	Connection          conn = DriverManager.getConnection(url, dbuid, dbpwd);
+	
+	String              sql  = "";
+	sql += " DELETE FROM TUSER WHERE UPPER(USERID) = ? ";
+	PreparedStatement  pstmt = conn.prepareStatement(sql);
+	pstmt.setString(1, deluid.toUpperCase());
+	
+	int                 aftcnt = pstmt.executeUpdate();
+	
+	pstmt.close();
+	conn.close();
+	return aftcnt;
+}
+	
 	// 데이터를 키보드로 입력 받는다 
 	private static TUserDTO inputData() {
 		System.out.println("아이디:");
@@ -185,5 +240,16 @@ public class TestTUser {
 		
 		TUserDTO tuser = new TUserDTO(userid, username, email);
 		return   tuser;
+	}
+	private static TUserDTO inputData2() {
+		System.out.println("수정할 아이디:");
+		String userid   = in.nextLine();
+		System.out.println("수정할 이름:");
+		String username = in.nextLine();
+		System.out.println("수정할 이메일:");
+		String email    = in.nextLine();
+		
+		TUserDTO  tuser = new TUserDTO(userid.toUpperCase(), username, email);
+		return tuser;
 	}
 }
